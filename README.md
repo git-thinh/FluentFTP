@@ -17,6 +17,34 @@ FluentFTP is released under the permissive MIT License, so it can be used in bot
 ![Features](https://github.com/robinrodricks/FluentFTP/raw/master/.github/features-4.png)
 
 
+    private void FtpClient_ValidateCertificate(FluentFTP.Client.BaseClient.BaseFtpClient control, FtpSslValidationEventArgs e)
+    {
+        string CertificationPath = _env.WebRootPath + "\\file.cer";
+        X509Certificate storedCert = X509Certificate.CreateFromCertFile(CertificationPath);
+        string localHash = storedCert.GetCertHashString();
+        if (localHash == null) { e.Accept = false; }
+        if (e.PolicyErrors == SslPolicyErrors.None || (e.Certificate != null && e.Certificate.GetCertHashString().Equals(localHash)))
+        {
+            e.Accept = true;
+        }
+    }
+
+    public void SecureFTPUploadFile(string host, int port, string username, string password, string source, string destination)
+    {
+        FileInfo f = new FileInfo(source);
+        string uploadfile = f.FullName;
+
+        var _ftpClient = new FtpClient(host, username, password, port);
+        //_ftpClient.Config.CustomStream = typeof(GnuTlsStream);
+        _ftpClient.Config.EncryptionMode = FtpEncryptionMode.Explicit;
+        //_ftpClient.Config.ValidateAnyCertificate = true;
+        _ftpClient.ValidateCertificate += FtpClient_ValidateCertificate;
+        //_ftpClient.Logger = new FtpLogAdapter(_logger);
+	......connect......
+	......upload files...
+    }
+
+
 ## Features
 
   - Full support for [FTP](https://github.com/robinrodricks/FluentFTP/wiki/FTP-Support), [FXP](https://github.com/robinrodricks/FluentFTP/wiki/FXP-Server-To-Server#how-does-fxp-transfer-work), [FTPS](https://github.com/robinrodricks/FluentFTP/wiki/FTP-Connection#faq_ftps), [FTPS with TLS 1.3](https://github.com/robinrodricks/FluentFTP/wiki/FTPS-Connection-using-GnuTLS), [FTPS with client certificates](https://github.com/robinrodricks/FluentFTP/wiki/FTP-Connection#faq_certs) and [FTPS Proxies](https://github.com/robinrodricks/FluentFTP/wiki/FTPS-Proxies)
